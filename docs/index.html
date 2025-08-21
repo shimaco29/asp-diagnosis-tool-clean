@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>メルカリShops EC一元管理 AI診断ツール</title>
+    <!-- Tailwind CSSのCDNを読み込み、スタイリングの基盤として使用 -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.jsのCDNを読み込み、診断結果のマッチ度をグラフで表示 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 日本語フォント「Noto Sans JP」を読み込み、可読性を高める -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Custom Red & Blue Palette -->
-    <!-- Application Structure Plan: A multi-step questionnaire (wizard) guides the user through key decision factors identified in the source report (business scale, product type, channel strategy, etc.). This structure simplifies a complex choice into a manageable, linear flow. The user answers one question at a time, reducing cognitive load. Upon completion, a results page displays the top-matched systems with clear justifications and a visual "match score," providing an actionable recommendation. This is more user-friendly than presenting a large, static table upfront and directly translates the report's analysis into an interactive experience. -->
-    <!-- Visualization & Content Choices: Questions are presented as interactive cards (HTML/CSS) for better engagement. The core recommendation is displayed using a card layout for each system, combining text, Unicode icons for features, and a dynamic horizontal bar chart (Chart.js/Canvas) to visually represent the "match score". This makes the results scannable and easy to understand. A full comparison table (HTML) is available on-demand for users who who want deeper analysis, keeping the initial results clean. All choices prioritize clarity and interaction without relying on static images or prohibited libraries. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    
+    <!-- カスタムCSSを定義し、Tailwindでカバーできない部分（アニメーションなど）を補完 -->
     <style>
         body { font-family: 'Noto Sans JP', sans-serif; }
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
@@ -22,21 +23,22 @@
         .progress-bar-fill {
             transition: width 0.5s ease-in-out;
         }
+        /* 比較テーブルのレスポンシブなデザイン調整 */
         .comparison-table th, .comparison-table td {
-            font-size: 0.75rem; /* Reduced font size for better fit */
+            font-size: 0.75rem; 
             line-height: 1rem;
-            min-width: 80px; /* Reduced min-width */
+            min-width: 80px; 
             padding: 0.5rem;
         }
         .comparison-table .feature-col {
-            min-width: 150px; /* Adjusted minimum width for the feature column */
+            min-width: 150px; 
         }
         .comparison-table .long-text-col {
             word-break: break-word;
         }
         @media (max-width: 640px) {
             .comparison-table th, .comparison-table td {
-                min-width: 70px; /* Smaller min-width for mobile */
+                min-width: 70px; 
                 font-size: 0.65rem;
             }
             .comparison-table .feature-col {
@@ -44,6 +46,8 @@
             }
         }
     </style>
+    
+    <!-- Tailwindのカスタムカラーを定義し、デザインに一貫性を持たせる -->
     <script>
         tailwind.config = {
             theme: {
@@ -67,14 +71,18 @@
 
     <div class="container mx-auto max-w-4xl p-4 sm:p-8">
         
+        <!-- ヘッダー部分 -->
         <header class="text-center mb-8">
+            <!-- 追加されたConfidentialテキスト -->
+            <span class="text-xs text-gray-400 font-medium tracking-wide uppercase">Confidential | 社外秘</span>
             <h1 class="text-3xl md:text-4xl font-bold text-tertiary-blue">メルカリShops EC一元管理 AI診断ツール</h1>
             <p class="mt-2 text-gray-600">いくつかの簡単な質問に答えるだけで、あなたのショップに最適なシステムを見つけます。</p>
         </header>
 
+        <!-- メインのアプリケーションコンテナ。画面の状態を切り替える -->
         <main id="app-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-10 min-h-[500px] flex flex-col justify-center">
 
-            <!-- Start Screen -->
+            <!-- 1. 開始画面 -->
             <div id="start-screen" class="text-center fade-in">
                 <div class="mb-6">
                     <span class="text-6xl">&#128270;</span>
@@ -86,13 +94,13 @@
                 </button>
             </div>
 
-            <!-- Question Screen -->
+            <!-- 2. 質問画面 -->
             <div id="question-screen" class="hidden">
                 <div id="progress-bar-container" class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
                     <div id="progress-bar" class="bg-main-red h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
                 </div>
                 <div id="question-content">
-                    <!-- JS will populate this -->
+                    <!-- JavaScriptで質問内容が動的に挿入される -->
                 </div>
                 <div class="mt-6 flex justify-between">
                     <button id="back-btn" class="bg-custom-gray text-gray-700 font-bold py-3 px-6 rounded-full shadow-md hover:bg-gray-300 transition-all duration-300">
@@ -102,9 +110,10 @@
                 </div>
             </div>
 
-            <!-- Loading Screen -->
+            <!-- 3. ロード中画面 -->
             <div id="loading-screen" class="hidden text-center">
-                 <div class="flex justify-center items-center mb-4">
+                <div class="flex justify-center items-center mb-4">
+                    <!-- SVGでローディングアニメーションを作成 -->
                     <svg class="animate-spin h-10 w-10 text-main-red" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -114,34 +123,34 @@
                 <p class="text-gray-600 mt-2">あなたに最適なシステムを選んでいます。</p>
             </div>
 
-            <!-- Results Screen -->
+            <!-- 4. 結果画面 -->
             <div id="results-screen" class="hidden">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-tertiary-blue">診断結果</h2>
                     <p class="mt-2 text-gray-600">あなたのビジネスに最もおすすめのシステムはこちらです！</p>
                 </div>
                 <div id="results-list" class="space-y-6">
-                    <!-- JS will populate this -->
+                    <!-- JavaScriptで診断結果のカードが動的に生成される -->
                 </div>
-                 <div class="text-center mt-10">
+                <div class="text-center mt-10">
                     <button id="show-comparison-btn" class="bg-custom-gray text-gray-700 font-bold py-3 px-8 rounded-full shadow-md hover:bg-gray-300 transition-all duration-300">
                         全システムを比較する
                     </button>
                 </div>
             </div>
             
-            <!-- Comparison Screen -->
+            <!-- 5. 比較画面 -->
             <div id="comparison-screen" class="hidden">
-                 <div class="text-center mb-8">
+                <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-tertiary-blue">EC一元管理システム比較表</h2>
                     <p class="mt-2 text-gray-600">システムの特徴を一覧で確認できます。最新の接続リストは、<a href="https://support.mercari-shops.com/hc/ja/articles/16849943532697-API%E9%80%A3%E6%90%BA%E3%81%97%E3%81%A6%E3%81%84%E3%82%8BEC%E4%B8%80%E5%85%83%E7%AE%A1%E7%90%86%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0" target="_blank" rel="noopener noreferrer" class="font-bold text-tertiary-blue hover:underline">こちら</a>よりご確認ください。</p>
                 </div>
                 <div class="w-full">
                     <table id="comparison-table" class="w-full bg-white comparison-table">
-                        <!-- JS will populate this -->
+                        <!-- JavaScriptで比較テーブルが動的に生成される -->
                     </table>
                 </div>
-                 <div class="text-center mt-10 space-x-4">
+                <div class="text-center mt-10 space-x-4">
                     <button id="back-to-results-btn" class="bg-custom-gray text-gray-700 font-bold py-3 px-8 rounded-full shadow-md hover:bg-gray-300 transition-all duration-300">
                         診断結果に戻る
                     </button>
@@ -153,6 +162,7 @@
 
         </main>
         
+        <!-- フッターの免責事項 -->
         <footer class="text-center mt-8 text-xs text-gray-500">
             <p>この診断はシステム選定の参考情報を提供するものです。<br>最終的な導入の決定は、各システムの公式サイトをご確認の上、ショップさまご自身の判断でお願いいたします。</p>
         </footer>
@@ -161,6 +171,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+    /*
+     * 1. データ定義
+     * - systems: 各EC一元管理システムの情報（名前、説明、特徴タグ、価格など）を格納する配列。
+     * - questions: 診断の設問と選択肢を定義する配列。
+     */
     const systems = [
         {
             id: 'next_engine',
@@ -544,6 +559,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
+    /*
+     * 2. アプリケーションのロジックと状態管理
+     * - `currentQuestionIndex`: 現在の質問番号を追跡
+     * - `userAnswers`: ユーザーの回答を保存するオブジェクト
+     * - 各画面とボタンのDOMエレメントを取得
+     */
     let currentQuestionIndex = 0;
     let userAnswers = {};
 
@@ -558,6 +579,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progress-bar');
     const questionContent = document.getElementById('question-content');
 
+    /*
+     * 3. イベントリスナーの設定
+     * - ボタンクリック時の画面遷移やロジック実行を定義
+     */
     startBtn.addEventListener('click', () => {
         switchScreen(startScreen, questionScreen);
         showQuestion(currentQuestionIndex);
@@ -578,6 +603,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     nextBtn.addEventListener('click', handleNextQuestion);
 
+    /*
+     * 4. 主要なアプリケーション関数
+     * - `switchScreen`: CSSアニメーションで画面を切り替える
+     * - `showQuestion`: 質問と選択肢を動的に描画
+     * - `handleNextQuestion`: 次の質問へ進むか、結果計算を開始する
+     * - `updateProgressBar`: プログレスバーの進行状況を更新
+     * - `calculateResults`: ユーザーの回答に基づいてシステムのスコアを計算
+     * - `weight`変数を使用して、重要な質問（規模、チャネル）のスコアを2倍にするロジックを実装
+     */
     function switchScreen(from, to) {
         from.classList.add('fade-out');
         setTimeout(() => {
@@ -632,8 +666,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (question.type === 'multiple') {
             const answerBtns = questionContent.querySelectorAll('.answer-btn-multiple');
-
-            // Restore previous answers
             userAnswers[question.key] = prevAnswers;
             nextBtn.disabled = userAnswers[question.key].length === 0;
 
@@ -689,10 +721,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         setTimeout(() => {
             let scores = systems.map(system => ({ ...system, score: 0 }));
-
+            // ユーザーの回答を基に各システムのスコアを計算する
             for (const key in userAnswers) {
                 if (userAnswers[key] && userAnswers[key].length > 0) {
-                    const weight = (key === 'task' || key === 'priority') ? 1 : 2;
+                    // 「規模」と「チャネル」の回答には重み付けを適用
+                    const weight = (key === 'task' || key === 'priority') ? 1 : 2; 
                     userAnswers[key].forEach(answerTag => {
                         scores.forEach(system => {
                             if (system.tags.includes(answerTag)) {
@@ -702,15 +735,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             }
-
+            // スコアが高い順にソート
             scores.sort((a, b) => b.score - a.score);
             
             switchScreen(loadingScreen, resultsScreen);
-            displayResults(scores.filter(s => s.type === 'api')); //診断結果はAPI連携システムのみを対象
+            // 診断結果はAPI連携システムのみを表示
+            displayResults(scores.filter(s => s.type === 'api')); 
             setupComparisonTable(scores);
         }, 1500);
     }
     
+    /* * 5. 結果表示とテーブル描画
+     * - `featureIcons`: 機能名に対応するUnicodeアイコンのマップ
+     * - `displayResults`: スコアに基づいて結果カードを動的に生成し、Chart.jsでグラフを描画
+     * - `getReason`: ユーザーの回答からおすすめ理由を生成
+     * - `setupComparisonTable`: 全システムの比較表を動的に生成し、トップ3を強調表示
+     */
     const featureIcons = {
         '受注管理': '&#128196;', '在庫連携': '&#128260;', '商品登録': '&#128260;', '倉庫/POS連携': '&#127970;', 'アプリで拡張': '&#129513;',
         '在庫自動更新': '&#128260;', '商品一括登録': '&#128260;', '受注自動化': '&#129302;', 'セット品管理': '&#127873;', '実店舗連携': '&#128160;',
@@ -805,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             resultsList.appendChild(card);
             
-             setTimeout(() => {
+            setTimeout(() => {
                 new Chart(document.getElementById(`chart-${system.id}`), {
                     type: 'bar',
                     data: {
@@ -902,7 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="p-3 text-sm">${getSystemTarget(system.tags)}</td>
             </tr>
         `;
-    }).join('');
+        }).join('');
 
         table.innerHTML = header + `<tbody>${tableBody}</tbody>`;
         
